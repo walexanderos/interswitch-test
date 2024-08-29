@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  PENDING
+  INPROGRESS
+  COMPLETED
+}
+
+model Task {
+  id            BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  title         String     @db.VarChar(100)
+  code          String     @unique @db.VarChar(20)
+  description   String     @db.Text
+  status        TaskStatus @default(PENDING)
+  assigned_date DateTime?   @db.DateTime()
+  due_date      DateTime?   @db.DateTime()
+  creator_id    Int        @db.UnsignedInt
+  assignee_id   Int?        @db.UnsignedInt
+
+  @@map("tasks")
+}
+
+model Code {
+  id   BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  code String @unique @db.VarChar(15)
+
+  @@map("unique_codes")
+}
