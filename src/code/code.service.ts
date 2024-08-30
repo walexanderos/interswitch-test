@@ -90,9 +90,12 @@ export class CodeService {
     return await this.prismaservice.code.findMany();
   }
 
-  validateFormat(code: string): boolean {
+  validateFormat(code: string): {pattern: string, match: boolean} {
     const regexPattern = this.defineRegexPattern(this.pattern);
-    return regexPattern.test(code);
+    return {
+        pattern: this.pattern,
+        match: regexPattern.test(code)
+    };
   }
 
   private defineRegexPattern(pattern: string): RegExp {

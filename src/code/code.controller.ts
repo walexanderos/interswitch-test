@@ -30,7 +30,6 @@ export class CodeController {
   })
   @Get('/validate')
   async validCodeFormat(@Query() query: any) {
-    // we can implement pagination here
     return this.codeService.validateFormat(query.code);
   }
 
