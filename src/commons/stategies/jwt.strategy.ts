@@ -3,6 +3,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { AppConfigService } from '../../config/app/app.service';
+import { AuthService } from '../../auth/auth.service';
 
 export interface AccessTokenPayload {
     sub: string;
@@ -13,7 +14,8 @@ export interface AccessTokenPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
     
   constructor(
-    private readonly appconfig: AppConfigService
+    private readonly appconfig: AppConfigService,
+    private readonly authService: AuthService
     ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -27,7 +29,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate (payload: AccessTokenPayload): Promise<any> {
     const { sub: id } = payload;
-
-    return true;
+    return await this.authService.getUserById(Number(id));
   }
 }

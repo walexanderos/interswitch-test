@@ -14,7 +14,7 @@ export class PermissionsGuard implements CanActivate {
       context.getHandler(),
     );
     
-    const userPermissions = context.getArgs()[0].user.role.permissions;
+    const userPermissions = context.getArgs()[0].user.role.roles_permission;
 
     if (!routePermissions) {
       return true;
@@ -22,7 +22,7 @@ export class PermissionsGuard implements CanActivate {
 
     const hasPermission = () =>
       routePermissions.every(routePermission =>
-        userPermissions.some(e => e.permission.permission === routePermission),
+        userPermissions.some(e => e.permission.permission_id === routePermission),
       );
 
     return hasPermission();

@@ -1,15 +1,12 @@
-import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsNumberString } from 'class-validator';
-
-export class EmailDto {
-    @IsEmail()  email: string;
-}
-
-export class TokenDto {
-    @IsNotEmpty() token: string;
-}
+import { IsInt, IsNotEmpty } from 'class-validator';
 
 export class LoginDto {
-    @IsEmail()    email: string;
+    @IsNotEmpty() username: string;
     @IsNotEmpty() password: string;
-    @IsNotEmpty() type: string
+}
+
+export class RegisterDto {
+    @IsNotEmpty() @IsInt() role_id: number;
+    @IsNotEmpty() username: string;
+    @IsNotEmpty() password: string;
 }

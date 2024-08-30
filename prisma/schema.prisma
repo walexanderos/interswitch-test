@@ -16,23 +16,121 @@ enum TaskStatus {
   COMPLETED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
 model Task {
   id            BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   title         String     @db.VarChar(100)
-  code          String     @unique @db.VarChar(20)
+  code          String     @unique @db.VarChar(12)
   description   String     @db.Text
   status        TaskStatus @default(PENDING)
-  assigned_date DateTime?   @db.DateTime()
-  due_date      DateTime?   @db.DateTime()
+  assigned_date DateTime?  @db.DateTime()
+  due_date      DateTime?  @db.DateTime()
   creator_id    Int        @db.UnsignedInt
-  assignee_id   Int?        @db.UnsignedInt
+  assignee_id   Int?       @db.UnsignedInt
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+  parent_task   BigInt?    @db.UnsignedBigInt
+
+  patient Patient? @relation(fields: [assignee_id], references: [id], onDelete: Cascade)
 
   @@map("tasks")
 }
 
 model Code {
   id   BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  code String @unique @db.VarChar(15)
+  code String @unique @db.VarChar(12)
 
   @@map("unique_codes")
+}
+
+model Patient {
+  id         Int              @id @default(autoincrement()) @db.UnsignedInt
+  active     Boolean          @default(true)
+  gender     Gender
+  birth_date DateTime        @db.Date
+  created_at DateTime         @default(now())
+  names      PatientName[]
+  address    PatientAddress[]
+  tasks      Task[]
+
+  @@map("patients")
+}
+
+model PatientName {
+  id         Int     @id @default(autoincrement()) @db.UnsignedInt
+  patient_id Int     @db.UnsignedInt
+  use        String  @unique @db.VarChar(20)
+  family     String  @unique @db.VarChar(20)
+  given      String  @db.Text
+  patient    Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+
+  @@map("patient_names")
+}
+
+model PatientAddress {
+  id         Int     @id @default(autoincrement()) @db.UnsignedInt
+  patient_id Int     @db.UnsignedInt
+  use        String  @unique @db.VarChar(20)
+  line       String  @db.Text
+  state      String  @unique @db.VarChar(20)
+  city       String  @unique @db.VarChar(20)
+  patient    Patient @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+
+  @@map("patient_address")
+}
+
+model User {
+  id       Int    @id @default(autoincrement()) @db.UnsignedInt
+  username String @db.VarChar(50) @unique
+  password String @db.VarChar(250)
+  role_id  Int    @db.UnsignedSmallInt
+  role     Role   @relation(fields: [role_id], references: [id], onDelete: Restrict)
+
+  @@map("users")
+}
+
+model Permission {
+  id               Int               @id @default(autoincrement()) @db.UnsignedMediumInt
+  permission_id    String            @unique @db.VarChar(50)
+  name             String            @unique @db.VarChar(50)
+  description      String?           @db.VarChar(250)
+  is_active        Boolean           @default(true)
+  roles_permission RolesPermission[]
+
+  @@map("permissions")
+}
+
+model Role {
+  id               Int               @id @default(autoincrement()) @db.UnsignedSmallInt
+  name             String            @unique @db.VarChar(50)
+  is_active        Boolean           @default(true)
+  roles_permission RolesPermission[]
+  assigned_users   User[]
+
+  @@map("roles")
+}
+
+model RolesPermission {
+  id            Int        @id @default(autoincrement())
+  role_id       Int        @db.UnsignedSmallInt
+  permission_id Int        @db.UnsignedMediumInt
+  role          Role       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+  @@index([role_id, permission_id])
+  @@map("roles_permission")
+}
+
+model RefreshToken {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id     Int
+  is_revoked  Boolean  @default(false)
+  expiry_date DateTime @db.Timestamp()
+
+  @@map("refresh_token")
 }

@@ -6,6 +6,8 @@ import { PrismaModule } from './config/database/prisma/prisma.module';
 import { HttpConfigModule } from './config/http/http.module';
 import { CodeModule } from './code/code.module';
 import { TaskModule } from './task/task.module';
+import { PatientModule } from './patient/patient.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { TaskModule } from './task/task.module';
     HttpConfigModule,
     CodeModule,
     TaskModule,
+    PatientModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

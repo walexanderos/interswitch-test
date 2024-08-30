@@ -4,82 +4,126 @@ import { Code } from '@prisma/client';
 
 @Injectable()
 export class CodeService {
-    private letters: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private digits: string = "0123456789";
-    private limit: number = 12;
-    private default_pattern: string = "AAA-NNN-SSSS";
-    private pattern: string = "AAA-NNN-SSSS";
-    constructor(private readonly prismaservice: PrismaService){}
+  private letters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  private digits: string = '0123456789';
+  private limit: number = 12;
+  private default_pattern: string = 'AAA-NNN-SSSS';
+  private pattern: string = 'AAA-NNN-SSSS';
+  constructor(private readonly prismaservice: PrismaService) {}
 
-    async generateCode(){
-        let code: string;
-        let is_existing: Code | null; 
-        do {
-            code = this.createCode();
-            is_existing = await this.getCode(code);
-        }while(is_existing);
+  async generateCode(custom_pattern: string = null): Promise<string>{
+    let code: string;
+    let is_existing: Code | null;
 
-        // code is valid
-        await this.saveCode(code);
-        return code;
+    // generate code an ensure that it does not already exist
+    // if code exists, then generate another code
+    do {
+      code = this.createCode(custom_pattern);
+      is_existing = await this.getCode(code);
+    } while (is_existing !== null);
+
+    // save unique code
+    await this.saveCode(code);
+
+    return code;
+  }
+
+  private createCode(custom_pattern: string = null): string {
+    let part = custom_pattern ? custom_pattern.split('-'): this.pattern.split('-');
+
+    if (part.length < 1) {
+      part = this.default_pattern.split('-');
     }
 
-    private createCode(): string{
-        let part = this.pattern.split('-');
+    let code: string[] = [];
 
-        if(part.length < 1) {
-            part = this.default_pattern.split('-');
+
+    for (let index = 0; index < part.length; index++) {
+        // dynamically set char lenght based on pattern
+      let code_part = Array.from({ length: part[index].length }, () => {
+
+        // check for code  part type then generate character based on type
+        if (part[index].at(0) == 'A') {
+          return this.letters.charAt(
+            Math.floor(Math.random() * this.letters.length),
+          );
+        } else if (part[index].at(0) == 'N') {
+          return this.digits.charAt(
+            Math.floor(Math.random() * this.digits.length),
+          );
+        } else {
+          if (Math.random() < 0.5) {
+            return this.letters
+              .charAt(Math.floor(Math.random() * this.letters.length))
+              .toLowerCase();
+          } else {
+            return this.digits.charAt(
+              Math.floor(Math.random() * this.digits.length),
+            );
+          }
         }
+      }).join('');
 
-        let code: string[] = [];
-        for (let index = 0; index < part.length; index++) {
-            let code_part = Array.from({length: part[index].length}, () => {
-                if(index == 0){
-                    return this.letters.charAt(Math.floor(Math.random() * this.letters.length));
-                }else if(index == 1){
-                    return this.digits.charAt(Math.floor(Math.random() * this.digits.length));
-                }else{
-                    if(Math.random() < 0.5){
-                        return this.letters.charAt(Math.floor(Math.random() * this.letters.length)).toLowerCase();
-                    }else{
-                        return this.digits.charAt(Math.floor(Math.random() * this.digits.length));
-                    }
-                }
-            }).join('');
-
-            code.push(code_part);
-
-        }
-
-        return code.join("-");
+      code.push(code_part);
     }
 
-    async saveCode(code: string): Promise<Code>{
-        return await this.prismaservice.code.create({
-            data:{
-                code: code
-            }
-        });
+    return code.join('-');
+  }
+
+  async saveCode(code: string): Promise<Code> {
+    return await this.prismaservice.code.create({
+      data: {
+        code: code,
+      },
+    });
+  }
+
+  async getCode(code: string): Promise<Code | null> {
+    return await this.prismaservice.code.findUnique({
+      where: {
+        code: code,
+      },
+    });
+  }
+
+  async getAllCodes() {
+    return await this.prismaservice.code.findMany();
+  }
+
+  validateFormat(code: string): boolean {
+    const regexPattern = this.defineRegexPattern(this.pattern);
+    return regexPattern.test(code);
+  }
+
+  private defineRegexPattern(pattern: string): RegExp {
+    const parts = pattern.split('-');
+    let regexString = '^';
+    let regexStringPart: string[] = [];
+
+    for (const part of parts) {
+      switch (part.at(0)) {
+        case 'A':
+          regexStringPart.push('[A-Z]{' + part.length + '}');
+          break;
+        case 'N':
+          regexStringPart.push('\\d{' + part.length + '}');
+          break;
+        default:
+          regexStringPart.push('[a-z0-9]{' + part.length + '}');
+      }
     }
 
-    async getCode(code: string): Promise<Code | null>{
-        return await this.prismaservice.code.findUnique({
-            where: {
-                code:code
-            }
-        });
-    }
+    regexString += regexStringPart.join('-');
+    regexString += '$';
 
-    async getAllCodes(){
-        return await this.prismaservice.code.findMany();
-    }
+    return new RegExp(regexString);
+  }
 
-    validateFormat(code: string): boolean {
-        const pattern = "/^[A-Z]{3}-[0-9]{3}-[a-z0-9]{4}$/";
-        return pattern.match(code) ? true : false;
+  setCodePattern(pattern: string): boolean {
+    if (pattern && pattern.length == this.limit) {
+      this.pattern = pattern.toUpperCase();
+      return true;
     }
-
-    async setCodePattern(pattern: string) {
-
-    }
+    return false;
+  }
 }
