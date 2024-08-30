@@ -5,8 +5,11 @@ This included the theory and practical solution to the assessment question from 
 Solutions include: 
 
 **Task CRUD Operation with Heirachial feature**
+
 **Unique code generation service with dynamic pattern**
+
 **Identity Module with JWT and Role Based Access Control (for test, create user endpoint is RBAC-protected)**
+
 **FHIR Patient resource implementation**
 
 Section 2a and 4 can be found in `$root_dir/interswitch-theory-answer.pdf`
